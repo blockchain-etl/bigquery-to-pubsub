@@ -1,0 +1,87 @@
+# MIT License
+#
+# Copyright (c) 2019 Evgeny Medvedev, evge.medvedev@gmail.com
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+import decimal
+import json
+import time
+from datetime import timedelta
+
+from bigquery_to_pubsub.service.time_series_bigquery_to_file_service import TimeSeriesBigQueryToFileService
+from bigquery_to_pubsub.utils.file_utils import delete_file
+
+
+class TimeSeriesBigQueryToPubSubJob:
+    def __init__(
+            self,
+            bigquery_table,
+            start_timestamp,
+            end_timestamp,
+            batch_size_in_seconds,
+            timestamp_field,
+            pubsub_topic,
+            temp_bigquery_dataset,
+            temp_bucket):
+        self.bigquery_table = bigquery_table
+        self.start_timestamp = start_timestamp
+        self.end_timestamp = end_timestamp
+        self.batch_size_in_seconds = batch_size_in_seconds
+        self.timestamp_field = timestamp_field
+
+        self.pubsub_topic = pubsub_topic
+
+        self.time_series_bigquery_to_file_service = TimeSeriesBigQueryToFileService(
+            bigquery_table=bigquery_table,
+            timestamp_field=timestamp_field,
+            temp_bigquery_dataset=temp_bigquery_dataset,
+            temp_bucket=temp_bucket
+        )
+
+    def run(self):
+        try:
+            self._do_run()
+        finally:
+            self._end()
+
+    def _do_run(self):
+        batches = split_to_batches(self.start_timestamp, self.end_timestamp, self.batch_size_in_seconds)
+
+        for batch_start_timestamp, batch_end_timestamp in batches:
+            file = self.time_series_bigquery_to_file_service.download_time_series(batch_start_timestamp,
+                                                                                  batch_end_timestamp)
+
+            with open(file) as file_handle:
+                for line in file_handle:
+                    parsed_line = json.loads(line, parse_float=decimal.Decimal)
+                    print(parsed_line)
+                time.sleep(2)
+            delete_file(file)
+
+    def _end(self):
+        self.time_series_bigquery_to_file_service.close()
+
+
+def split_to_batches(start_timestamp, end_timestamp, batch_size_in_seconds):
+    batch_start = start_timestamp
+    while batch_start < end_timestamp:
+        batch_end = min(end_timestamp, batch_start + timedelta(seconds=batch_size_in_seconds))
+        yield batch_start, batch_end
+        batch_start = batch_end
