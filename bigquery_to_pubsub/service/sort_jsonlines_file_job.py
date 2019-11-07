@@ -25,7 +25,9 @@ import os
 
 
 class SortJsonLinesFileJob:
-    """Requires jq tool to be install on the system https://github.com/stedolan/jq/wiki/Installation"""
+    """Requires jq tool to be installed on the system https://github.com/stedolan/jq/wiki/Installation.
+    Can sort files a few GB in size without much RAM. sort_field values must not contain tabs.
+    """
 
     def __init__(
             self,
