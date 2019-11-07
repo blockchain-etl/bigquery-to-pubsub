@@ -3,10 +3,10 @@
 A tool for streaming time series data from a BigQuery table to Pub/Sub
 
 1. Create a Service Account with the following roles:
-- BigQuery Admin
-- Storage Admin
-- Pub/Sub Publisher 
-
+    - BigQuery Admin
+    - Storage Admin
+    - Pub/Sub Publisher 
+  
 1. Create a key file for the Service Account and download it as `credentials_file.json`.
 
 1. Create a Pub/Sub topic called `bigquery-to-pubsub-test0`.
