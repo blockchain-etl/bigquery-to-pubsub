@@ -22,38 +22,25 @@
 
 import decimal
 import json
-import time
 from datetime import timedelta
 
-from bigquery_to_pubsub.service.time_series_bigquery_to_file_service import TimeSeriesBigQueryToFileService
 from bigquery_to_pubsub.utils.file_utils import delete_file
 
 
-class TimeSeriesBigQueryToPubSubJob:
+class ReplayJob:
     def __init__(
             self,
-            bigquery_table,
             start_timestamp,
             end_timestamp,
             batch_size_in_seconds,
-            timestamp_field,
-            pubsub_topic,
-            temp_bigquery_dataset,
-            temp_bucket):
-        self.bigquery_table = bigquery_table
+            time_series_bigquery_to_file_service,
+            replayer):
         self.start_timestamp = start_timestamp
         self.end_timestamp = end_timestamp
         self.batch_size_in_seconds = batch_size_in_seconds
-        self.timestamp_field = timestamp_field
 
-        self.pubsub_topic = pubsub_topic
-
-        self.time_series_bigquery_to_file_service = TimeSeriesBigQueryToFileService(
-            bigquery_table=bigquery_table,
-            timestamp_field=timestamp_field,
-            temp_bigquery_dataset=temp_bigquery_dataset,
-            temp_bucket=temp_bucket
-        )
+        self.time_series_bigquery_to_file_service = time_series_bigquery_to_file_service
+        self.replayer = replayer
 
     def run(self):
         try:
@@ -65,14 +52,12 @@ class TimeSeriesBigQueryToPubSubJob:
         batches = split_to_batches(self.start_timestamp, self.end_timestamp, self.batch_size_in_seconds)
 
         for batch_start_timestamp, batch_end_timestamp in batches:
-            file = self.time_series_bigquery_to_file_service.download_time_series(batch_start_timestamp,
-                                                                                  batch_end_timestamp)
+            file = self.time_series_bigquery_to_file_service.download_time_series(batch_start_timestamp, batch_end_timestamp)
 
             with open(file) as file_handle:
                 for line in file_handle:
-                    parsed_line = json.loads(line, parse_float=decimal.Decimal)
-                    print(parsed_line)
-                time.sleep(2)
+                    item = json.loads(line, parse_float=decimal.Decimal)
+                    self.replayer.replay(item)
             delete_file(file)
 
     def _end(self):

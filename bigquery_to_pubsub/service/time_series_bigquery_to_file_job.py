@@ -20,13 +20,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import json
 import logging
-import random
-import string
 
 from google.cloud import bigquery
-from google.cloud import storage
 
 from bigquery_to_pubsub.service.bigquery_to_file_job import BigQueryToFileJob
 from bigquery_to_pubsub.service.sort_jsonlines_file_job import SortJsonLinesFileJob
@@ -60,10 +56,6 @@ class TimeSeriesBigQueryToFileJob:
                 self.bigquery_table, self.start_timestamp, self.end_timestamp
             ))
 
-        # with open('test.json', 'w') as output:
-        #     output.write('{"test1": "val1"}')
-        # return 'test.json'
-
         sql = (
             "SELECT * FROM `{table}` "
             'WHERE {timestamp_field} >= "{start_timestamp}" and {timestamp_field} < "{end_timestamp}" '
@@ -82,5 +74,3 @@ class TimeSeriesBigQueryToFileJob:
         delete_file(output_filename)
 
         return sorted_filename
-
-# TODO: Make sure it works with different locations.

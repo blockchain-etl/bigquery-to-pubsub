@@ -51,6 +51,7 @@ class BigQueryToFileJob:
         ))
 
         # Query
+        # TODO: Make sure it works with different locations.
 
         random_name = random_string(10)
         destination_table = self.bigquery_client.dataset(self.temp_bigquery_dataset).table(
@@ -68,6 +69,7 @@ class BigQueryToFileJob:
         assert query_job.state == 'DONE'
 
         # Export
+        # TODO: Allow exporting to multiple files in case output is bigger than 1GB.
 
         bucket = self.temp_bucket
         filename = random_name + '.json'

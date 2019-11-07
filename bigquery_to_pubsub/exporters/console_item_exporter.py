@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2019 Evgeny Medvedev, evge.medvedev@gmail.com
+# Copyright (c) 2018 Evgeny Medvedev, evge.medvedev@gmail.com
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,35 +20,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import logging
-import os
+import json
 
 
-class SortJsonLinesFileJob:
-    """Requires jq tool to be installed on the system https://github.com/stedolan/jq/wiki/Installation.
-    Can sort files a few GB in size without much RAM. sort_field values must not contain tabs.
-    """
+class ConsoleItemExporter:
+    def open(self):
+        pass
 
-    def __init__(
-            self,
-            filename,
-            sort_field):
-        self.filename = filename
-        self.sort_field = sort_field
+    def export_items(self, items):
+        for item in items:
+            self.export_item(item)
 
-    def run(self):
-        logging.info('Sorting jsonlines file {} by {} field.'.format(self.filename, self.sort_field))
+    def export_item(self, item):
+        print(json.dumps(item))
 
-        output_filename = self.filename + '.sorted.json'
-
-        sort_command = '''jq -cr '"\\(.{sort_field})\\t\\(.)"' {filename} | sort | cut -f 2 > {output_filename}'''.format(
-            sort_field=self.sort_field, filename=self.filename, output_filename=output_filename)
-
-        os.system(sort_command)
-
-        logging.info('Sorting jsonlines file {} by {} field finished.'.format(self.filename, self.sort_field))
-
-        return output_filename
-
-
-
+    def close(self):
+        pass

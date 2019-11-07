@@ -50,7 +50,7 @@ class TimeSeriesBigQueryToFileService:
         job_future = self.lookahead_job_futures.get((start_timestamp, end_timestamp))
 
         if job_future is not None:
-            logging.info('Job for {} and {} was scheduled before. Getting the result.'.format(
+            logging.info('Job for {} and {} has been scheduled before. Getting the result.'.format(
                 start_timestamp, end_timestamp))
             output_filename = job_future.result()
             del self.lookahead_job_futures[start_timestamp, end_timestamp]
@@ -63,6 +63,7 @@ class TimeSeriesBigQueryToFileService:
         return output_filename
 
     def schedule_lookahead_jobs(self, start_timestamp, end_timestamp):
+        # TODO: Allow scheduling more than 1 lookahead job.
         # Schedule only 1 lookahead job for now
         seconds = (end_timestamp - start_timestamp).total_seconds()
 
@@ -71,8 +72,8 @@ class TimeSeriesBigQueryToFileService:
 
         logging.info(
             'Scheduling lookahead job for {} and {}'.format(lookahead_start_timestamp, lookahead_end_timestamp))
-        job_future = self.executor.submit(
-            self._do_download_time_series, lookahead_start_timestamp, lookahead_end_timestamp)
+        job_future = self.executor.submit(self._do_download_time_series, lookahead_start_timestamp,
+                                          lookahead_end_timestamp)
 
         self.lookahead_job_futures[lookahead_start_timestamp, lookahead_end_timestamp] = job_future
 
@@ -88,10 +89,11 @@ class TimeSeriesBigQueryToFileService:
         return job.run()
 
     def clean_lookahead_jobs(self):
-        pass
-
-    def close(self):
-        self.executor.shutdown()
         for future in self.lookahead_job_futures.values():
             output_file = future.result()
             delete_file(output_file)
+        self.lookahead_job_futures = {}
+
+    def close(self):
+        self.executor.shutdown()
+        self.clean_lookahead_jobs()
