@@ -21,6 +21,6 @@
 # SOFTWARE.
 
 
-from bigquery_to_pubsub.cli.bigquery_to_pubsub import bigquery_to_pubsub
+from bigquery_to_pubsub.cli.replay_bigquery_to_pubsub import replay_bigquery_to_pubsub
 
-bigquery_to_pubsub()
+replay_bigquery_to_pubsub()

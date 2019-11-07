@@ -29,8 +29,8 @@ from timeout_decorator import timeout_decorator
 
 class GooglePubSubItemExporter:
 
-    def __init__(self, item_type_to_topic_mapping, message_attributes=('item_id',)):
-        self.item_type_to_topic_mapping = item_type_to_topic_mapping
+    def __init__(self, topic, message_attributes=()):
+        self.topic = topic
         self.publisher = create_publisher()
         self.message_attributes = message_attributes
 
@@ -61,15 +61,10 @@ class GooglePubSubItemExporter:
             future.result()
 
     def export_item(self, item):
-        item_type = item.get('type')
-        if item_type is not None and item_type in self.item_type_to_topic_mapping:
-            topic_path = self.item_type_to_topic_mapping.get(item_type)
-            data = json.dumps(item).encode('utf-8')
+        data = json.dumps(item).encode('utf-8')
 
-            message_future = self.publisher.publish(topic_path, data=data, **self.get_message_attributes(item))
-            return message_future
-        else:
-            logging.warning('Topic for item type "{}" is not configured.'.format(item_type))
+        message_future = self.publisher.publish(self.topic, data=data, **self.get_message_attributes(item))
+        return message_future
 
     def get_message_attributes(self, item):
         attributes = {}

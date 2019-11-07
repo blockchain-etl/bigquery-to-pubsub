@@ -39,7 +39,7 @@ class Replayer:
         item_wait_time = (adjusted_item_timestamp - now).total_seconds()
 
         if item_wait_time > 0:
-            logging.info('Waiting {} seconds before replaying transaction with timestamp {}'
+            logging.info('Waiting {} seconds before replaying item with timestamp {}'
                          .format(item_wait_time, item_timestamp))
             time.sleep(item_wait_time)
         self.item_exporter.export_item(item)

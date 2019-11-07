@@ -22,6 +22,7 @@
 
 import logging
 import os
+import subprocess
 
 
 class SortJsonLinesFileJob:
@@ -32,9 +33,11 @@ class SortJsonLinesFileJob:
     def __init__(
             self,
             filename,
-            sort_field):
+            sort_field,
+            sort_timeout=300):
         self.filename = filename
         self.sort_field = sort_field
+        self.sort_timeout = sort_timeout
 
     def run(self):
         logging.info('Sorting jsonlines file {} by {} field.'.format(self.filename, self.sort_field))
@@ -44,7 +47,13 @@ class SortJsonLinesFileJob:
         sort_command = '''jq -cr '"\\(.{sort_field})\\t\\(.)"' {filename} | sort | cut -f 2 > {output_filename}'''.format(
             sort_field=self.sort_field, filename=self.filename, output_filename=output_filename)
 
-        os.system(sort_command)
+        return_value = subprocess.call(['/bin/bash', '-o', 'pipefail', '-c', sort_command], timeout=self.sort_timeout)
+
+        if return_value != 0:
+            raise ValueError('jq command returned non-0 value: ' + str(return_value))
+
+        if not os.path.exists(output_filename):
+            raise ValueError('jq command didn\'t produce any output. Check its output above.')
 
         logging.info('Sorting jsonlines file {} by {} field finished.'.format(self.filename, self.sort_field))
 

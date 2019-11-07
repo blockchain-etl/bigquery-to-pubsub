@@ -25,6 +25,7 @@ import datetime
 import click
 
 from bigquery_to_pubsub.exporters.console_item_exporter import ConsoleItemExporter
+from bigquery_to_pubsub.exporters.google_pubsub_item_exporter import GooglePubSubItemExporter
 from bigquery_to_pubsub.service.replay_job import ReplayJob
 from bigquery_to_pubsub.service.replayer import Replayer
 from bigquery_to_pubsub.service.time_series_bigquery_to_file_service import TimeSeriesBigQueryToFileService
@@ -49,9 +50,8 @@ DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
 @click.option('-p', '--pubsub-topic', default=None, type=str, help='')
 @click.option('--temp-bigquery-dataset', required=True, type=str, help='')
 @click.option('--temp-bucket', required=True, type=str, help='')
-def bigquery_to_pubsub(bigquery_table, start_timestamp, end_timestamp, replay_start_timestamp, replay_rate,
+def replay_bigquery_to_pubsub(bigquery_table, start_timestamp, end_timestamp, replay_start_timestamp, replay_rate,
                        batch_size_in_seconds, timestamp_field, pubsub_topic, temp_bigquery_dataset, temp_bucket):
-
     time_series_bigquery_to_file_service = TimeSeriesBigQueryToFileService(
         bigquery_table=bigquery_table,
         timestamp_field=timestamp_field,
@@ -59,7 +59,7 @@ def bigquery_to_pubsub(bigquery_table, start_timestamp, end_timestamp, replay_st
         temp_bucket=temp_bucket
     )
 
-    item_exporter = ConsoleItemExporter()
+    item_exporter = create_item_exporter(pubsub_topic)
 
     replayer = Replayer(
         time_series_start_timestamp=start_timestamp,
@@ -69,6 +69,7 @@ def bigquery_to_pubsub(bigquery_table, start_timestamp, end_timestamp, replay_st
         item_exporter=item_exporter
     )
 
+    # TODO: Create temp BigQuery dataset and storage bucket if don't exist
     job = ReplayJob(
         start_timestamp=start_timestamp,
         end_timestamp=end_timestamp,
@@ -78,3 +79,12 @@ def bigquery_to_pubsub(bigquery_table, start_timestamp, end_timestamp, replay_st
     )
 
     job.run()
+
+
+def create_item_exporter(pubsub_topic):
+    if pubsub_topic is not None:
+        item_exporter = GooglePubSubItemExporter(topic=pubsub_topic)
+    else:
+        item_exporter = ConsoleItemExporter()
+
+    return item_exporter
