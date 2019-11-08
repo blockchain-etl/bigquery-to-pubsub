@@ -50,8 +50,7 @@ class TimeSeriesBigQueryToFileService:
         job_future = self.lookahead_job_futures.get((start_timestamp, end_timestamp))
 
         if job_future is not None:
-            logging.info('Job for {} and {} has been scheduled before. Getting the result.'.format(
-                start_timestamp, end_timestamp))
+            logging.info('Job for {} and {} has been scheduled before. Getting the result.'.format(start_timestamp, end_timestamp))
             output_filename = job_future.result()
             del self.lookahead_job_futures[start_timestamp, end_timestamp]
         else:
@@ -70,10 +69,8 @@ class TimeSeriesBigQueryToFileService:
         lookahead_start_timestamp = end_timestamp
         lookahead_end_timestamp = lookahead_start_timestamp + timedelta(seconds=seconds)
 
-        logging.info(
-            'Scheduling lookahead job for {} and {}'.format(lookahead_start_timestamp, lookahead_end_timestamp))
-        job_future = self.executor.submit(self._do_download_time_series, lookahead_start_timestamp,
-                                          lookahead_end_timestamp)
+        logging.info('Scheduling lookahead job for {} and {}'.format(lookahead_start_timestamp, lookahead_end_timestamp))
+        job_future = self.executor.submit(self._do_download_time_series, lookahead_start_timestamp, lookahead_end_timestamp)
 
         self.lookahead_job_futures[lookahead_start_timestamp, lookahead_end_timestamp] = job_future
 

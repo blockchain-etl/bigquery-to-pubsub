@@ -11,19 +11,19 @@ class Replayer:
             time_series_start_timestamp,
             replay_start_timestamp,
             timestamp_field,
-            rate,
+            replay_rate,
             item_exporter):
 
         if replay_start_timestamp < time_series_start_timestamp:
             raise ValueError('replay_start_timestamp must be equal or after time_series_start_timestamp')
 
-        if rate < 0:
+        if replay_rate < 0:
             raise ValueError('rate must be greater than 0')
 
         self.time_series_start_timestamp = time_series_start_timestamp
         self.replay_start_timestamp = replay_start_timestamp
         self.timestamp_field = timestamp_field
-        self.rate = rate
+        self.replay_rate = replay_rate
         self.item_exporter = item_exporter
 
         self.replay_delta = datetime.timedelta(
@@ -33,6 +33,7 @@ class Replayer:
         item_timestamp = item.get(self.timestamp_field)
         if not item_timestamp:
             raise ValueError('item doesn\'t have a timestamp field ' + json.dumps(item))
+
         item_timestamp = parse_timestamp(item_timestamp)
 
         replay_timestamp = self.adjust_item_timestamp(item_timestamp)
@@ -41,8 +42,7 @@ class Replayer:
         item_wait_time = (replay_timestamp - now).total_seconds()
 
         if item_wait_time > 0:
-            logging.info('Waiting {} seconds before replaying item with timestamp {}'
-                         .format(item_wait_time, item_timestamp))
+            logging.info('Waiting {} seconds before replaying item with timestamp {}'.format(item_wait_time, item_timestamp))
             time.sleep(item_wait_time)
         enriched_item = self.enrich_item(item, item_timestamp, replay_timestamp)
         self.item_exporter.export_item(enriched_item)
@@ -50,7 +50,7 @@ class Replayer:
     def adjust_item_timestamp(self, item_timestamp):
         # Adjust for rate
         offset = (item_timestamp - self.time_series_start_timestamp).total_seconds()
-        adjusted_offset = offset * self.rate
+        adjusted_offset = offset * self.replay_rate
         rate_adjusted_timestamp = self.time_series_start_timestamp + datetime.timedelta(seconds=adjusted_offset)
 
         # Adjust for replay_delta

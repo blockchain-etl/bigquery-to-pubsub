@@ -52,6 +52,8 @@ DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
 @click.option('--temp-bucket', required=True, type=str, help='')
 def replay_bigquery_to_pubsub(bigquery_table, start_timestamp, end_timestamp, replay_start_timestamp, replay_rate,
                        batch_size_in_seconds, timestamp_field, pubsub_topic, temp_bigquery_dataset, temp_bucket):
+
+    # TODO: Create temp BigQuery dataset and storage bucket if don't exist
     time_series_bigquery_to_file_service = TimeSeriesBigQueryToFileService(
         bigquery_table=bigquery_table,
         timestamp_field=timestamp_field,
@@ -65,11 +67,10 @@ def replay_bigquery_to_pubsub(bigquery_table, start_timestamp, end_timestamp, re
         time_series_start_timestamp=start_timestamp,
         replay_start_timestamp=replay_start_timestamp,
         timestamp_field=timestamp_field,
-        rate=replay_rate,
+        replay_rate=replay_rate,
         item_exporter=item_exporter
     )
 
-    # TODO: Create temp BigQuery dataset and storage bucket if don't exist
     job = ReplayJob(
         start_timestamp=start_timestamp,
         end_timestamp=end_timestamp,
