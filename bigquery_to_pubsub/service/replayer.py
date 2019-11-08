@@ -4,6 +4,7 @@ import logging
 import time
 
 
+# TODO: Check it works with timezones correctly.
 class Replayer:
     def __init__(
             self,
@@ -25,35 +26,43 @@ class Replayer:
         self.rate = rate
         self.item_exporter = item_exporter
 
-        self.replay_time_delta = datetime.timedelta(
+        self.replay_delta = datetime.timedelta(
             seconds=(replay_start_timestamp - time_series_start_timestamp).total_seconds())
 
     def replay(self, item):
         item_timestamp = item.get(self.timestamp_field)
         if not item_timestamp:
             raise ValueError('item doesn\'t have a timestamp field ' + json.dumps(item))
+        item_timestamp = parse_timestamp(item_timestamp)
 
-        adjusted_item_timestamp = self.adjust_item_timestamp(parse_timestamp(item_timestamp))
+        replay_timestamp = self.adjust_item_timestamp(item_timestamp)
 
         now = datetime.datetime.now()
-        item_wait_time = (adjusted_item_timestamp - now).total_seconds()
+        item_wait_time = (replay_timestamp - now).total_seconds()
 
         if item_wait_time > 0:
             logging.info('Waiting {} seconds before replaying item with timestamp {}'
                          .format(item_wait_time, item_timestamp))
             time.sleep(item_wait_time)
-        self.item_exporter.export_item(item)
+        enriched_item = self.enrich_item(item, item_timestamp, replay_timestamp)
+        self.item_exporter.export_item(enriched_item)
 
     def adjust_item_timestamp(self, item_timestamp):
-        # Adjust rate
-        time_diff = (item_timestamp - self.time_series_start_timestamp).total_seconds()
-        adjusted_time_diff = time_diff * self.rate
-        rate_adjusted_timestamp = self.time_series_start_timestamp + datetime.timedelta(seconds=adjusted_time_diff)
+        # Adjust for rate
+        offset = (item_timestamp - self.time_series_start_timestamp).total_seconds()
+        adjusted_offset = offset * self.rate
+        rate_adjusted_timestamp = self.time_series_start_timestamp + datetime.timedelta(seconds=adjusted_offset)
 
-        # Adjust for replay delta
-        delta_adjusted_timestamp = rate_adjusted_timestamp + self.replay_time_delta
+        # Adjust for replay_delta
+        delta_adjusted_timestamp = rate_adjusted_timestamp + self.replay_delta
 
         return delta_adjusted_timestamp
+
+    def enrich_item(self, item, item_timestamp, replay_timestamp):
+        item['_offset'] = (item_timestamp - self.time_series_start_timestamp).total_seconds()
+        item['_replay_timestamp'] = format_timestamp(replay_timestamp)
+        item['_publish_timestamp'] = format_timestamp(datetime.datetime.now())
+        return item
 
 
 def parse_timestamp(ts):
@@ -61,3 +70,7 @@ def parse_timestamp(ts):
         return datetime.datetime.strptime(ts, '%Y-%m-%d %H:%M:%S UTC')
     except ValueError:
         return datetime.datetime.strptime(ts, '%Y-%m-%d %H:%M:%S.%f UTC')
+
+
+def format_timestamp(ts):
+    return datetime.datetime.strftime(ts, '%Y-%m-%d %H:%M:%S.%f UTC')
