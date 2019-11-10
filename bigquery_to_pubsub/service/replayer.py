@@ -51,12 +51,12 @@ class Replayer:
         # Adjust for rate
         offset = (item_timestamp - self.time_series_start_timestamp).total_seconds()
         adjusted_offset = offset * self.replay_rate
-        rate_adjusted_timestamp = self.time_series_start_timestamp + datetime.timedelta(seconds=adjusted_offset)
+        timestamp_adjusted_for_rate = self.time_series_start_timestamp + datetime.timedelta(seconds=adjusted_offset)
 
         # Adjust for replay_delta
-        delta_adjusted_timestamp = rate_adjusted_timestamp + self.replay_delta
+        timestamp_adjusted_for_replay_delta = timestamp_adjusted_for_rate + self.replay_delta
 
-        return delta_adjusted_timestamp
+        return timestamp_adjusted_for_replay_delta
 
     def enrich_item(self, item, item_timestamp, replay_timestamp):
         item['_offset'] = (item_timestamp - self.time_series_start_timestamp).total_seconds()
