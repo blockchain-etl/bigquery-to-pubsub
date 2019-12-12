@@ -1,0 +1,5 @@
+1. Get the logs by running these commands:
+
+  kubectl logs <pod_name> -f
+  
+Find <pod_name> in the output above.

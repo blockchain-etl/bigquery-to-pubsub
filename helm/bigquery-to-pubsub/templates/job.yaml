@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "bigquery-to-pubsub.fullname" . }}
+  labels:
+{{ include "bigquery-to-pubsub.labels" . | indent 4 }}
+spec:
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "bigquery-to-pubsub.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      volumes:
+      - name: google-cloud-key
+        secret:
+          secretName: bigquery-to-pubsub-app-key
+      restartPolicy: OnFailure
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          args:
+            - "--bigquery-table={{ .Values.app.bigqueryTable }}"
+            - "--timestamp-field={{ .Values.app.timestampField }}"
+            - "--start-timestamp={{ .Values.app.startTimestamp }}"
+            - "--end-timestamp={{ .Values.app.endTimestamp }}"
+            - "--batch-size-in-seconds={{ .Values.app.batchSizeInSeconds }}"
+            - "--replay-rate={{ .Values.app.replayRate }}"
+            - "--pubsub-topic={{ .Values.app.pubsubTopic }}"
+            - "--temp-bigquery-dataset={{ .Values.app.tempBigqueryDataset }}"
+            - "--temp-bucket={{ .Values.app.tempBucket }}"
+          env:
+          - name: GOOGLE_APPLICATION_CREDENTIALS
+            value: /var/secrets/google/key.json
+          volumeMounts:
+          - name: google-cloud-key
+            mountPath: /var/secrets/google
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

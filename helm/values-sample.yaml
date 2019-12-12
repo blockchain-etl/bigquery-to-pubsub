@@ -1,0 +1,10 @@
+app:
+  bigqueryTable: bigquery-public-data.crypto_ethereum.blocks
+  timestampField: timestamp
+  startTimestamp: 2019-10-23T00:00:00
+  endTimestamp: 2019-10-23T01:00:00
+  batchSizeInSeconds: 1800
+  replayRate: 0.1
+  pubsubTopic: projects/your-project/topics/bigquery-to-pubsub-test0
+  tempBigqueryDataset: your_temp_bigquery_dataset
+  tempBucket: your_temp_bucket
