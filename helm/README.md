@@ -22,7 +22,7 @@ Helm charts for deploying https://github.com/blockchain-etl/bigquery-to-pubsub
     cp values-sample.yaml values-dev.yaml 
     ```
 
-    For `tempBigqueryDataset` and `tempBucket` use value printed by `bash get_temp_resource_name.sh`
+    For `tempBigqueryDataset` and `tempBucket` use value printed by `bash scripts/get_temp_resource_name.sh`
 
 1. Install the chart:
 
