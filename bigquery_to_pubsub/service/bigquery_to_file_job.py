@@ -53,7 +53,6 @@ class BigQueryToFileJob:
         ))
 
         # Query
-        # TODO: Make sure it works with different locations.
 
         random_name = random_string(10)
         destination_table = self.bigquery_client.dataset(self.temp_bigquery_dataset).table(
@@ -79,7 +78,6 @@ class BigQueryToFileJob:
         object = filename
         destination_uri = "gs://{}/{}".format(bucket, object)
         extract_job_config = bigquery.ExtractJobConfig()
-        extract_job_config.priority = bigquery.QueryPriority.INTERACTIVE
         extract_job_config.destination_format = bigquery.job.DestinationFormat.NEWLINE_DELIMITED_JSON
 
         extract_job = self.bigquery_client.extract_table(
