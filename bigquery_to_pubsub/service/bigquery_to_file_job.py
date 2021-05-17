@@ -35,11 +35,13 @@ class BigQueryToFileJob:
             self,
             sql,
             output_filename,
+            location,
             temp_bigquery_dataset,
             temp_bucket):
         self.sql = sql
         self.output_filename = output_filename
 
+        self.location = location
         self.temp_bigquery_dataset = temp_bigquery_dataset
         self.temp_bucket = temp_bucket
 
@@ -62,6 +64,7 @@ class BigQueryToFileJob:
 
         query_job = self.bigquery_client.query(
             self.sql,
+            location=self.location,
             job_config=query_job_config
         )
 
