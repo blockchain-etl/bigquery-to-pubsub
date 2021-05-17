@@ -54,7 +54,7 @@ class ReplayJob:
         for batch_start_timestamp, batch_end_timestamp in batches:
             file = self.time_series_bigquery_to_file_service.download_time_series(batch_start_timestamp, batch_end_timestamp)
 
-            with open(file) as file_handle:
+            with open(file, encoding='utf-8') as file_handle:
                 for line in file_handle:
                     item = json.loads(line, parse_float=decimal.Decimal)
                     self.replayer.replay(item)
