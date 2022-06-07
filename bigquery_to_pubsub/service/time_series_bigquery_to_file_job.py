@@ -35,12 +35,14 @@ class TimeSeriesBigQueryToFileJob:
     def __init__(
             self,
             bigquery_table,
+            query,
             start_timestamp,
             end_timestamp,
             timestamp_field,
             temp_bigquery_dataset,
             temp_bucket):
         self.bigquery_table = bigquery_table
+        self.query = query
         self.start_timestamp = start_timestamp
         self.end_timestamp = end_timestamp
         self.timestamp_field = timestamp_field
@@ -51,16 +53,25 @@ class TimeSeriesBigQueryToFileJob:
         self.bigquery_client = bigquery.Client()
 
     def run(self):
-        logging.info(
-            'Started TimeSeriesBigQueryToFileJob with BigQuery table {}, start timestamp {}, end timestamp {}'.format(
-                self.bigquery_table, self.start_timestamp, self.end_timestamp
-            ))
-
-        sql = (
-            "SELECT * FROM `{table}` "
-            'WHERE {timestamp_field} >= "{start_timestamp}" and {timestamp_field} < "{end_timestamp}" '
-        ).format(table=self.bigquery_table, timestamp_field=self.timestamp_field,
-                 start_timestamp=self.start_timestamp, end_timestamp=self.end_timestamp)
+        sql = None
+        if self.query:
+            sql = (
+                "{query} "
+            ).format(query=self.query)
+            logging.info(
+                'Started TimeSeriesBigQueryToFileJob with start timestamp {}, end timestamp {}, query {}'.format(
+                    self.start_timestamp, self.end_timestamp, self.query
+                ))
+        else:
+            sql = (
+                "SELECT * FROM `{table}` "
+                'WHERE {timestamp_field} >= "{start_timestamp}" and {timestamp_field} < "{end_timestamp}" '
+            ).format(table=self.bigquery_table, timestamp_field=self.timestamp_field,
+                     start_timestamp=self.start_timestamp, end_timestamp=self.end_timestamp)
+            logging.info(
+                'Started TimeSeriesBigQueryToFileJob with BigQuery table {}, start timestamp {}, end timestamp {}'.format(
+                    self.bigquery_table, self.start_timestamp, self.end_timestamp
+                ))
 
         random_name = random_string(10)
         output_filename = random_name + '.json'

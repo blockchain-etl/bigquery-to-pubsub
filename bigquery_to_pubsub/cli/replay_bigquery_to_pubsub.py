@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 import datetime
-
+import sys
 import click
 
 from bigquery_to_pubsub.exporters.console_item_exporter import ConsoleItemExporter
@@ -37,11 +37,12 @@ DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
 
 @click.command(context_settings=dict(help_option_names=['-h', '--help']))
-@click.option('-t', '--bigquery-table', default='bigquery-public-data.crypto_ethereum.blocks', type=str, help='')
-@click.option('-s', '--start-timestamp', default='2019-10-23T00:00:00',
-              type=click.DateTime(formats=[DATETIME_FORMAT]), help='')
-@click.option('-e', '--end-timestamp', default='2019-10-23T02:00:00',
-              type=click.DateTime(formats=[DATETIME_FORMAT]), help='')
+@click.option('-t', '--bigquery-table', default=None, type=str, help='return records from this table. example: bigquery-public-data.crypto_ethereum.blocks')
+@click.option('-q', '--query', default=None, type=str, help='instead of table records, return results for this query. you should include timestamps, etc')
+@click.option('-s', '--start-timestamp', default=None, help='start timestamp for replay window, if using table',
+              type=click.DateTime(formats=[DATETIME_FORMAT]))
+@click.option('-e', '--end-timestamp', default=None, help='end timestamp for replay window, if using table',
+              type=click.DateTime(formats=[DATETIME_FORMAT]))
 @click.option('-r', '--replay-start-timestamp', default=datetime.datetime.now().strftime(DATETIME_FORMAT),
               type=click.DateTime(formats=[DATETIME_FORMAT]), help='')
 @click.option('-b', '--replay-rate', default=1, type=float, help='Replay rate. Number between 0 and 1.')
@@ -50,12 +51,16 @@ DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
 @click.option('-p', '--pubsub-topic', default=None, type=str, help='')
 @click.option('--temp-bigquery-dataset', required=True, type=str, help='')
 @click.option('--temp-bucket', required=True, type=str, help='')
-def replay_bigquery_to_pubsub(bigquery_table, start_timestamp, end_timestamp, replay_start_timestamp, replay_rate,
+def replay_bigquery_to_pubsub(bigquery_table, query, start_timestamp, end_timestamp, replay_start_timestamp, replay_rate,
                        batch_size_in_seconds, timestamp_field, pubsub_topic, temp_bigquery_dataset, temp_bucket):
+
+    if (bigquery_table and query) or not (bigquery_table or query):
+        sys.exit('must give either of --query or --bigquery-table, but not both')
 
     # TODO: Create temp BigQuery dataset and storage bucket if don't exist
     time_series_bigquery_to_file_service = TimeSeriesBigQueryToFileService(
         bigquery_table=bigquery_table,
+        query=query,
         timestamp_field=timestamp_field,
         temp_bigquery_dataset=temp_bigquery_dataset,
         temp_bucket=temp_bucket
