@@ -6,26 +6,46 @@ A tool for streaming time series data from a BigQuery table to Pub/Sub
     - BigQuery Admin
     - Storage Admin
     - Pub/Sub Publisher 
-  
-1. Create a key file for the Service Account and download it as `credentials_file.json`.
+
+1. Set the project
+
+```bash
+gcloud config set project project-name
+project=$(gcloud config get-value project 2> /dev/null)
+```
+
+1. Create a key file for the Service Account and download it as `credentials.json`.
+
+```
+credentials=credentials.json
+credentials_path=$(dirname $PWD/credentials.json)
+```
 
 1. Create a Pub/Sub topic called `bigquery-to-pubsub-test0`.
+
+```bash
+topic=bigquery-to-pubsub-test0
+```
 
 1. Create a temporary GCS bucket and a temporary BigQuery dataset:
 
 ```bash
-> bash create_temp_resources.sh
+bash create_temp_resources.sh
+temp_resource_name=$(./get_temp_resource_name.sh)
+```
+
+1. Build the docker image
+
+```bash
+docker build -t bigquery-to-pubsub:latest -f Dockerfile .
 ```
  
 1. Run replay for Ethereum transactions:
 
 ```bash
-> docker build -t bigquery-to-pubsub:latest -f Dockerfile .
-> project=$(gcloud config get-value project 2> /dev/null)
-> temp_resource_name=$(./get_temp_resource_name.sh)
-> echo "Replaying Ethereum transactions"
-> docker run \
-    -v /path_to_credentials_file/:/bigquery-to-pubsub/ --env GOOGLE_APPLICATION_CREDENTIALS=/bigquery-to-pubsub/credentials_file.json \
+echo "Replaying Ethereum transactions"
+docker run \
+    -v $credentials_path:/bigquery-to-pubsub/ --env GOOGLE_APPLICATION_CREDENTIALS=/bigquery-to-pubsub/$credentials \
     bigquery-to-pubsub:latest \
     --bigquery-table bigquery-public-data.crypto_ethereum.transactions \
     --timestamp-field block_timestamp \
@@ -33,7 +53,7 @@ A tool for streaming time series data from a BigQuery table to Pub/Sub
     --end-timestamp 2019-10-23T01:00:00 \
     --batch-size-in-seconds 1800 \
     --replay-rate 0.1 \
-    --pubsub-topic projects/${project}/topics/bigquery-to-pubsub-test0 \
+    --pubsub-topic projects/${project}/topics/${topic} \
     --temp-bigquery-dataset ${temp_resource_name} \
     --temp-bucket ${temp_resource_name}
 ```
