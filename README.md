@@ -2,45 +2,45 @@
 
 A tool for streaming time series data from a BigQuery table to Pub/Sub
 
-1. Create a Service Account with the following roles:
+## Create a Service Account with the following roles:
     - BigQuery Admin
     - Storage Admin
     - Pub/Sub Publisher 
 
-1. Set the project
+## Set the project
 
 ```bash
 gcloud config set project project-name
 project=$(gcloud config get-value project 2> /dev/null)
 ```
 
-1. Create a key file for the Service Account and download it as `credentials.json`.
+## Create a key file for the Service Account and download it as `credentials.json`.
 
 ```
 credentials=credentials.json
 credentials_path=$(dirname $PWD/credentials.json)
 ```
 
-1. Create a Pub/Sub topic called `bigquery-to-pubsub-test0`.
+## Create a Pub/Sub topic called `bigquery-to-pubsub-test0`.
 
 ```bash
 topic=bigquery-to-pubsub-test0
 ```
 
-1. Create a temporary GCS bucket and a temporary BigQuery dataset:
+## Create a temporary GCS bucket and a temporary BigQuery dataset:
 
 ```bash
 bash create_temp_resources.sh
 temp_resource_name=$(./get_temp_resource_name.sh)
 ```
 
-1. Build the docker image
+## Build the docker image
 
 ```bash
 docker build -t bigquery-to-pubsub:latest -f Dockerfile .
 ```
  
-1. Run replay for all Ethereum transactions in a specified time range at rate=0.1 (10x speed)
+## Run replay for all Ethereum transactions in a specified time range at rate=0.1 (10x speed)
 
 ```bash
 echo "Replaying Ethereum transactions"
@@ -58,9 +58,11 @@ docker run \
     --bigquery-table bigquery-public-data.crypto_ethereum.transactions
 ```
 
-1. Run replay for transactions using a query in a specified time range at rate=2 (0.5x speed)
+## Run replay for transactions using a query in a specified time range at rate=2 (0.5x speed)
+
 
 ```bash
+query=$(cat example_query_2.txt)
 echo "Replaying Ethereum transactions"
 docker run \
     -v $credentials_path:/bigquery-to-pubsub/ --env GOOGLE_APPLICATION_CREDENTIALS=/bigquery-to-pubsub/$credentials \
@@ -73,5 +75,5 @@ docker run \
     --pubsub-topic projects/${project}/topics/${topic} \
     --temp-bigquery-dataset ${temp_resource_name} \
     --temp-bucket ${temp_resource_name} \
-    --query 'SELECT * FROM `bigquery-public-data.crypto_ethereum.transactions` WHERE block_timestamp >= "2019-10-23 00:00:00" AND block_timestamp < "2019-10-24 00:00:00" AND (from_address IN (SELECT address FROM `exchange-flow-demo.exchange_wallet_addresses.exchange_wallet_addresses`) OR to_address IN (SELECT address FROM `exchange-flow-demo.exchange_wallet_addresses.exchange_wallet_addresses`))'
+    --query "$query"
 ```
