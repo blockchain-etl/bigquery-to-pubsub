@@ -33,10 +33,12 @@ class TimeSeriesBigQueryToFileService:
 
     def __init__(self,
                  bigquery_table,
+                 query,
                  timestamp_field,
                  temp_bigquery_dataset,
                  temp_bucket):
         self.bigquery_table = bigquery_table
+        self.query = query
         self.timestamp_field = timestamp_field
 
         self.temp_bigquery_dataset = temp_bigquery_dataset
@@ -77,6 +79,7 @@ class TimeSeriesBigQueryToFileService:
     def _do_download_time_series(self, start_timestamp, end_timestamp):
         job = TimeSeriesBigQueryToFileJob(
             bigquery_table=self.bigquery_table,
+            query=self.query,
             start_timestamp=start_timestamp,
             end_timestamp=end_timestamp,
             timestamp_field=self.timestamp_field,
