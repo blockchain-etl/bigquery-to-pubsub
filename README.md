@@ -60,7 +60,6 @@ docker run \
 
 ## Run replay for transactions using a query in a specified time range at rate=2 (0.5x speed)
 
-
 ```bash
 query=$(cat example_query_2.txt)
 echo "Replaying Ethereum transactions"
@@ -77,3 +76,6 @@ docker run \
     --temp-bucket ${temp_resource_name} \
     --query "$query"
 ```
+
+Thanks to Merkle Science for donating some exchange wallet labels as CSV here:
+https://github.com/merklescience/ethereum-exchange-addresses
