@@ -40,14 +40,13 @@ temp_resource_name=$(./get_temp_resource_name.sh)
 docker build -t bigquery-to-pubsub:latest -f Dockerfile .
 ```
  
-1. Run replay for Ethereum transactions:
+1. Run replay for all Ethereum transactions in a specified time range at rate=0.1 (10x speed)
 
 ```bash
 echo "Replaying Ethereum transactions"
 docker run \
     -v $credentials_path:/bigquery-to-pubsub/ --env GOOGLE_APPLICATION_CREDENTIALS=/bigquery-to-pubsub/$credentials \
     bigquery-to-pubsub:latest \
-    --bigquery-table bigquery-public-data.crypto_ethereum.transactions \
     --timestamp-field block_timestamp \
     --start-timestamp 2019-10-23T00:00:00 \
     --end-timestamp 2019-10-23T01:00:00 \
@@ -55,5 +54,24 @@ docker run \
     --replay-rate 0.1 \
     --pubsub-topic projects/${project}/topics/${topic} \
     --temp-bigquery-dataset ${temp_resource_name} \
-    --temp-bucket ${temp_resource_name}
+    --temp-bucket ${temp_resource_name} \
+    --bigquery-table bigquery-public-data.crypto_ethereum.transactions
+```
+
+1. Run replay for transactions using a query in a specified time range at rate=2 (0.5x speed)
+
+```bash
+echo "Replaying Ethereum transactions"
+docker run \
+    -v $credentials_path:/bigquery-to-pubsub/ --env GOOGLE_APPLICATION_CREDENTIALS=/bigquery-to-pubsub/$credentials \
+    bigquery-to-pubsub:latest \
+    --timestamp-field block_timestamp \
+    --start-timestamp 2019-10-23T00:00:00 \
+    --end-timestamp 2019-10-23T01:00:00 \
+    --batch-size-in-seconds 1800 \
+    --replay-rate 2 \
+    --pubsub-topic projects/${project}/topics/${topic} \
+    --temp-bigquery-dataset ${temp_resource_name} \
+    --temp-bucket ${temp_resource_name} \
+    --query 'SELECT * FROM `bigquery-public-data.crypto_ethereum.transactions` WHERE block_timestamp >= "2019-10-23 00:00:00" AND block_timestamp < "2019-10-24 00:00:00" AND (from_address IN (SELECT address FROM `exchange-flow-demo.exchange_wallet_addresses.exchange_wallet_addresses`) OR to_address IN (SELECT address FROM `exchange-flow-demo.exchange_wallet_addresses.exchange_wallet_addresses`))'
 ```
