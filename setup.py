@@ -29,7 +29,7 @@ setup(
         'Programming Language :: Python :: 3.7'
     ],
     keywords=['bigquery', 'pubsub', 'gcp'],
-    python_requires='>=3.5.3,<3.8.0',
+    python_requires='>=3.5.3,<3.10.0',
     install_requires=[
         'click==7.0',
         'google-cloud-pubsub==1.0.2',
