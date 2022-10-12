@@ -62,6 +62,8 @@ docker run \
 
 ```bash
 query=$(cat example_query_2.txt)
+query=$(cat example_query_2.sql | perl -ne 'chomp;print qq($_ )')
+
 echo "Replaying Ethereum transactions"
 docker run \
     -v $credentials_path:/bigquery-to-pubsub/ --env GOOGLE_APPLICATION_CREDENTIALS=/bigquery-to-pubsub/$credentials \

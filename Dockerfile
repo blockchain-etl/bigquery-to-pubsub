@@ -1,4 +1,4 @@
-FROM python:3.6
+FROM python:3.9
 MAINTAINER Evgeny Medvedev <evge.medvedev@gmail.com>
 ENV PROJECT_DIR=bigquery_to_pubsub
 
