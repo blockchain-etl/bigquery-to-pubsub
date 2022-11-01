@@ -31,16 +31,16 @@ setup(
     keywords=['bigquery', 'pubsub', 'gcp'],
     python_requires='>=3.5.3,<3.10.0',
     install_requires=[
-        'click==7.0',
-        'google-cloud-pubsub==1.0.2',
-        'google-cloud-storage==1.20.0',
-        'google-cloud-bigquery==1.21.0',
-        'timeout-decorator==0.4.1',
-        'python-dateutil==2.7.0',
+        'click==8.0.0',
+        'google-cloud-pubsub==2.4.2',
+        'google-cloud-storage==1.38.0',
+        'google-cloud-bigquery==2.16.1',
+        'timeout-decorator==0.5.0',
+        'python-dateutil==2.8.1',
     ],
     extras_require={
         'dev': [
-            'pytest~=4.3.0'
+            'pytest~=6.2.4'
         ]
     },
     entry_points={
